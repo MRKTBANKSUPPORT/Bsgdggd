@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#030305">
+<title>TonMine</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#030305;--p1:#101015;--p2:#17171f;--line:#262633;--tx:#f4f4fa;--mu:#8888a0;--b:#2a8cff;--v:#8b4dff;--ok:#2fe08f;--er:#ff5470;--c1:#8b4dff;--c2:#4b1fb8;--gl:#8b4dff88;--r:20px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(120% 60% at 50% -10%,#1a1040 0%,var(--bg) 60%) fixed;color:var(--tx);font:14px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;min-height:100dvh}
+button,input{font:inherit;color:inherit}button{border:0;cursor:pointer}
+.app{max-width:440px;margin:auto;padding:calc(10px + env(safe-area-inset-top)) 14px calc(100px + env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo{font-weight:800;font-size:19px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--b),var(--v));box-shadow:0 0 16px #6a5cff99;display:block}
+.chip{font-size:11px;color:var(--mu);background:var(--p1);border:1px solid var(--line);border-radius:20px;padding:5px 10px;display:flex;gap:6px;align-items:center}
+.chip b{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.card{background:linear-gradient(160deg,var(--p2),var(--p1));border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:0 10px 30px #0009,inset 0 1px #ffffff0d;margin-bottom:12px}
+.bal small{color:var(--mu);font-size:12px}
+.bal .num{font-size:30px;font-weight:800;letter-spacing:-1px;margin:2px 0 12px;font-variant-numeric:tabular-nums;background:linear-gradient(90deg,#fff,#b9c8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bal .num em{font-style:normal;font-size:15px;color:var(--mu);-webkit-text-fill-color:var(--mu);margin-left:4px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.btn{padding:12px 14px;border-radius:14px;font-weight:650;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--b),var(--v));box-shadow:0 6px 20px #5b4dff55,inset 0 1px #ffffff40;transition:transform .15s,filter .15s}
+.btn:active{transform:scale(.96);filter:brightness(1.15)}.btn.g{background:#22222d;box-shadow:inset 0 0 0 1px var(--line)}.btn.w{width:100%}.btn[disabled]{opacity:.45;pointer-events:none}.btn.sm{padding:8px 12px;font-size:12px;border-radius:11px}
+.stage{position:relative;height:280px;display:grid;place-items:center;perspective:700px;margin:-4px 0}
+.stage:before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(var(--gl),transparent 68%);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.15);opacity:.7}}
+.fan{width:236px;height:236px;transition:transform .25s cubic-bezier(.2,.8,.3,1.4);transform-style:preserve-3d;filter:drop-shadow(0 18px 22px #000c) drop-shadow(0 0 22px var(--gl));cursor:pointer;touch-action:manipulation}
+.fan svg{width:100%;height:100%;overflow:visible}
+.blades{transform-origin:100px 100px;animation:spin var(--spd,2s) linear infinite}.fan.boost .blades{animation-duration:.25s}
+.rings{transform-origin:100px 100px;animation:spin 14s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.float{position:absolute;pointer-events:none;font-weight:700;font-size:13px;color:var(--c1);animation:up 1s ease-out forwards;text-shadow:0 0 10px var(--c1)}
+@keyframes up{to{transform:translateY(-70px);opacity:0}}
+.tier{text-align:center;margin-top:-6px;font-size:12px;color:var(--mu)}.tier b{color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.stat{background:var(--p1);border:1px solid var(--line);border-radius:16px;padding:11px}.stat small{display:block;color:var(--mu);font-size:11px;margin-bottom:4px}.stat b{font-size:14px;font-variant-numeric:tabular-nums}
+h2{font-size:18px;margin:6px 2px 12px;letter-spacing:-.3px}h3{margin:0 0 10px;font-size:17px}
+.mu{color:var(--mu);font-size:12px;line-height:1.5}
+.item{display:flex;gap:12px;align-items:center}.ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:19px;background:linear-gradient(135deg,#2b1d6a,#14306a);flex:none;box-shadow:inset 0 1px #ffffff22}
+.item .t{flex:1;min-width:0}.item .t b{display:block;font-size:14px}.rew{font-weight:750;color:var(--ok);font-size:13px;white-space:nowrap}
+.tag{font-size:10px;padding:3px 8px;border-radius:20px;background:#ffffff12;color:var(--mu)}.tag.ok{background:#2fe08f22;color:var(--ok)}.tag.wait{background:#ffb02e22;color:#ffb02e}.tag.er{background:#ff547022;color:var(--er)}
+.bar{height:6px;border-radius:9px;background:#252532;overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--b),var(--v));border-radius:9px;transition:width .5s}
+.field{width:100%;background:#0b0b10;border:1px solid var(--line);border-radius:14px;padding:13px;font-size:15px;outline:0;margin:6px 0 10px;transition:border .2s,box-shadow .2s}.field:focus{border-color:var(--b);box-shadow:0 0 0 3px #2a8cff2a}
+.copy{display:flex;gap:8px;align-items:center;background:#0b0b10;border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 12px;margin:6px 0 10px}.copy span{flex:1;word-break:break-all;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.list>*{margin-bottom:10px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(440px,100%);display:flex;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#0a0a10e8;backdrop-filter:blur(20px);border-top:1px solid var(--line);border-radius:22px 22px 0 0;z-index:10}
+.nav button{flex:1;background:none;color:var(--mu);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;border-radius:14px;transition:.25s}
+.nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button.on{color:#9db8ff;text-shadow:0 0 12px #6a7cff}.nav button.on svg{filter:drop-shadow(0 0 6px #6a7cff);transform:translateY(-2px)}.nav button.on{background:radial-gradient(60% 80% at 50% 0,#4b3fff33,transparent)}
+.tab{display:none}.tab.on{display:block;animation:in .3s ease}@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.sheetbg{position:fixed;inset:0;background:#000b;backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:30}.sheetbg.on{display:flex}
+.sheet{width:min(440px,100%);max-height:88dvh;overflow:auto;background:#12121a;border:1px solid var(--line);border-radius:26px 26px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));animation:sl .3s cubic-bezier(.2,.8,.3,1)}@keyframes sl{from{transform:translateY(60%);opacity:0}}
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translate(-50%,-90px);background:#1d1d2a;border:1px solid #3a3a55;border-radius:16px;padding:11px 16px;font-size:13px;z-index:50;transition:.35s cubic-bezier(.2,.8,.3,1.3);box-shadow:0 10px 30px #000a;max-width:92%;text-align:center}.toast.on{transform:translate(-50%,0)}.toast.er{border-color:var(--er)}.toast.ok{border-color:var(--ok)}
+.av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--b),var(--v)) center/cover;display:grid;place-items:center;font-size:26px;font-weight:800;box-shadow:0 0 22px #6a5cff77}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand"><div class="logo"><i></i>TonMine</div><div class="chip"><b></b>Сеть TON</div></div>
+  <div class="card bal">
+    <small>Баланс</small>
+    <div class="num"><span id="bal">0</span><em>TON</em></div>
+    <div class="row"><button class="btn" id="bDep">Пополнить</button><button class="btn g" id="bWd">Вывести</button><button class="btn g" id="bHist">История</button></div>
+  </div>
+
+  <section class="tab on" id="t-home">
+    <div class="stage"><div class="fan" id="fan"></div></div>
+    <div class="tier" id="tierTxt"></div>
+    <div class="grid">
+      <div class="stat"><small>Скорость фарма</small><b id="sRate"></b></div>
+      <div class="stat"><small>Уровень кулера</small><b id="sLvl"></b></div>
+      <div class="stat"><small>Доход за час</small><b id="sHour"></b></div>
+      <div class="stat"><small>Доход за сутки</small><b id="sDay"></b></div>
+    </div>
+    <div class="row"><button class="btn" id="goUp">⚡ Улучшить кулер</button><button class="btn g" data-go="servers">Мои серверы</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{'use strict';
+/* ============ КОНФИГ ============ */
+const CFG={
+  API_BASE:'',                       // URL вашего backend; пусто = локальный режим
+  WALLET:'UQCDONYF6SgNhrVslwwew2B4_4vNeEzMu-3F8wcqAB9hfDbr',
+  BOT:'tonminescrypto_bot',CHANNEL:'https://t.me/TonMinesNews',
+  BASE_RATE:0.0000560582,MIN_WD:20,WD_FEE:0.30,OFFLINE_CAP:3*3600
+};
+const tg=window.Telegram&&Telegram.WebApp;
+try{tg&&(tg.ready(),tg.expand(),tg.setHeaderColor('#030305'),tg.setBackgroundColor('#030305'))}catch(e){}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hap=t=>{try{tg.HapticFeedback.impactOccurred(t||'light')}catch(e){}};
+const f=(n,d=9)=>Number(n).toFixed(d);
+const now=()=>Date.now();
+
+/* ============ BACKEND-СЛОЙ ============
+ Любая операция с деньгами должна подтверждаться сервером:
+ POST /deposit/create {amount}  -> memo, статус
+ GET  /sync                     -> {credits:[{id,amount,type,title}], deposits:{id:status}, withdrawals:{id:status}, tasks:{tik:'approved'|'rejected'}}
+ POST /withdraw {address,amount,fee,payout}, POST /task/submit {id,url}
+ GET /admin/requests -> {deposits:[...],withdrawals:[...]}
+ POST /admin/decision {type,id,status}; сервер проверяет Telegram initData и ADMIN_IDS=[9207642257,7341351177],
+  POST /admin/credit {userId,amount} — сервер проверяет initData и ADMIN_IDS, начисляет TON пользователю и защищает endpoint от повторов,
+ только сервер одобряет зачисление/выплату и обновляет статусы.
+ POST /referral/register {startParam} — привязать пригласившего по проверенному initData;
+ GET /referral/stats — {count,earned,referralBonus,sharePercent}; сервер начисляет 0.5 TON
+ за уникального приглашённого и 10% от его подтверждённых пополнений/покупок.
+ Сервер проверяет initData (HMAC от BOT_TOKEN), мониторит TON-транзакции по memo и делает выплаты. */
+async function api(path,body){
+  if(!CFG.API_BASE)return null;
+  try{const r=await fetch(CFG.API_BASE+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Init-Data':tg?.initData||''},body:body?JSON.stringify(body):undefined});return await r.json()}catch(e){return null}
+}
+
+/* ============ СОСТОЯНИЕ + ЗАЩИТА ============
+ Состояние живёт в замыкании (недоступно из консоли) и хранится с контрольной суммой.
+ Это защита от простого редактирования localStorage/DevTools; настоящей защитой остаётся сервер. */
+const KEY='tc_state_v2',SIG='tc_sig_v2';
+function sum(str,salt){let h=2166136261;const s=salt+str+salt;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+s.length}
+function rid(n){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const u=crypto.getRandomValues(new Uint8Array(n));u.forEach(x=>s+=a[x%a.length]);return s}
+const tgU=tg?.initDataUnsafe?.user||null;
+const salt='tc|'+(tgU?.id||'local')+'|k9';
+let S=(()=>{
+  try{const raw=localStorage.getItem(KEY);if(raw){if(localStorage.getItem(SIG)===sum(raw,salt))return JSON.parse(raw);}}catch(e){}
+  return {id:'TC-'+rid(8),bal:3,lvl:1,srv:[],t:now(),tasks:{},hist:[],dep:[],wd:[],done:0,seen:{},tik:null,daily:''};
+})();
+function save(){const raw=JSON.stringify(S);try{localStorage.setItem(KEY,raw);localStorage.setItem(SIG,sum(raw,salt))}catch(e){}}
+function log(title,amt){S.hist.unshift({t:now(),title,amt});S.hist=S.hist.slice(0,50)}
+// Local demo credits: work only in this browser/storage; not shared across devices.
+const LOCAL_CREDITS_KEY='tonmine_local_credits_v1';
+function applyLocalCredits(){
+  const userId=String(tgU?.id||'');
+  if(!userId)return;
+  try{
+    const credits=JSON.parse(localStorage.getItem(LOCAL_CREDITS_KEY)||'{}');
+    const list=credits[userId]||[];
+    if(!list.length)return;
+    let total=0;
+    list.forEach(c=>{if(!c.used){c.used=true;total+=Number(c.amount)||0;}});
+    if(total>0){S.bal+=total;log('Админское начисление (локально)',total);credits[userId]=list;localStorage.setItem(LOCAL_CREDITS_KEY,JSON.stringify(credits));save();}
+  }catch(e){}
+}
+
+
+/* ============ ЭКОНОМИКА ============ */
+const SHOP=[
+ {id:'s1',n:'Мини-ферма',d:'8 ядер / 16 GB',gh:'9 840 GH/s',cost:35,rate:0.000085,days:30,ic:'▣'},
+ {id:'s2',n:'Про-сервер',d:'16 ядер / 32 GB',gh:'21 300 GH/s',cost:80,rate:0.00019,days:30,ic:'▤'},
+ {id:'s3',n:'Гипер-кластер',d:'32 ядра / 64 GB',gh:'40 589 GH/s',cost:140,rate:0.000344,days:30,ic:'◈'}];
+const cost=l=>Math.round(2*Math.pow(1.8,l-1)*100)/100;
+const fanRate=l=>CFG.BASE_RATE*(1+(l-1)*.35);
+const srvActive=()=>S.srv.filter(s=>s.exp>now());
+const rate=()=>fanRate(S.lvl)+srvActive().reduce((a,s)=>a+SHOP.find(x=>x.id===s.id).rate,0);
+const TIERS=[{n:'Базовый',c1:'#8b4dff',c2:'#4b1fb8'},{n:'Усиленный',c1:'#3d8bff',c2:'#1a3fb8'},{n:'Плазменный',c1:'#22d3ee',c2:'#1470b8'},{n:'Квантовый',c1:'#f05bff',c2:'#7a1fb8'},{n:'Мифический',c1:'#ffc94d',c2:'#d9561a'}];
+const tier=l=>Math.min(4,Math.floor((l-1)/3));
+
+/* ============ 3D-КУЛЕР ============ */
+function fanSVG(l){
+  const t=TIERS[tier(l)],n=Math.min(12,8+Math.floor((l-1)/4));let bl='';
+  const prog=0.22+((l-1)%3)/3*0.6,C=2*Math.PI*90;
+  for(let i=0;i<n;i++){const r=`rotate(${i*360/n} 100 100)`;
+    bl+=`<g transform="${r}"><path d="M103 94C94 64 114 34 158 30C160 62 142 94 108 108Z" fill="url(#bg)" stroke="#e4d8ff" stroke-opacity=".35" stroke-width="1"/><path d="M103 94C94 64 114 34 158 30" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.6" stroke-linecap="round"/><path d="M110 104C140 92 152 68 154 40" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="3"/></g>`}
+  const ring=tier(l)>=2?`<g class="rings"><circle cx="100" cy="100" r="99" fill="none" stroke="${t.c1}" stroke-width="1.5" stroke-dasharray="3 9" opacity=".8"/></g>`:'';
+  return `<svg viewBox="0 0 200 200"><defs>
+  <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="${t.c2}"/><stop offset=".6" stop-color="${t.c1}"/><stop offset="1" stop-color="#d7c2ff"/></linearGradient>
+  <radialGradient id="hs" cx=".5" cy=".5"><stop offset="0" stop-color="#2c1b6e"/><stop offset="1" stop-color="#0b0618"/></radialGradient>
+  <radialGradient id="hb" cx=".35" cy=".3"><stop offset="0" stop-color="#4b4166"/><stop offset="1" stop-color="#0d0a18"/></radialGradient>
+  <linearGradient id="sh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <clipPath id="cp"><circle cx="100" cy="100" r="79"/></clipPath></defs>
+  <circle cx="100" cy="100" r="90" fill="#0e0c15" stroke="#1d1a28" stroke-width="12"/>
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#c0407f" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(C*prog).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-80 100 100)" style="filter:drop-shadow(0 0 5px #c0407f)"/>
+  ${ring}
+  <circle cx="100" cy="100" r="82" fill="url(#hs)" stroke="${t.c1}" stroke-width="2.5"/>
+  <g clip-path="url(#cp)"><g class="blades" style="--spd:${Math.max(.35,2.6-l*.16)}s">${bl}</g></g>
+  <circle cx="100" cy="100" r="79" fill="url(#sh)" pointer-events="none"/>
+  <circle cx="100" cy="100" r="25" fill="url(#hb)" stroke="${t.c1}" stroke-width="2.5"/>
+  <path d="M88 92h24c3 0 4 3 2.5 5L102 117c-1 1.5-3 1.5-4 0L85.500 97c-1.500-2 0-5 2.500-5Z M100 92v26" fill="none" stroke="#e8dcff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function paintFan(){
+  const t=TIERS[tier(S.lvl)],r=document.documentElement.style;
+  r.setProperty('--c1',t.c1);r.setProperty('--c2',t.c2);r.setProperty('--gl',t.c1+'88');
+  $('fan').innerHTML=fanSVG(S.lvl);
+  $('tierTxt').innerHTML=`Уровень <b>${S.lvl}</b> · ${t.n} · лопастей: ${Math.min(12,8+Math.floor((S.lvl-1)/4))}`;
+}
+const fan=$('fan');
+fan.addEventListener('pointerdown',e=>{
+  const b=fan.getBoundingClientRect(),x=(e.clientX-b.left)/b.width-.5,y=(e.clientY-b.top)/b.height-.5;
+  fan.style.transform=`rotateY(${x*28}deg) rotateX(${-y*28}deg) scale(.95)`;fan.classList.add('boost');hap();
+  const el=document.createElement('div');el.className='float';el.textContent='+'+f(rate(),7);el.style.left=(e.clientX-b.left)+'px';el.style.top=(e.clientY-b.top)+'px';fan.parentNode.appendChild(el);setTimeout(()=>el.remove(),1000);
+});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>fan.addEventListener(ev,()=>{fan.style.transform='';setTimeout(()=>fan.classList.remove('boost'),500)}));
+
+/* ============ УВЕДОМЛЕНИЯ / ШТОРКА ============ */
+let tt;function toast(m,k){const e=$('toast');e.textContent=m;e.className='toast on '+(k||'');clearTimeout(tt);tt=setTimeout(()=>e.className='toast',2400);if(k==='er')try{tg.HapticFeedback.notificationOccurred('error')}catch(x){}}
+function sheet(html){$('sheet').innerHTML=html;$('sbg').classList.add('on')}
+function closeSheet(){$('sbg').classList.remove('on')}
+$('sbg').addEventListener('click',e=>{if(e.target.id==='sbg')closeSheet()});
+function copy(t){(navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>toast('Скопировано','ok')).catch(()=>{const i=document.createElement('input');i.value=t;document.body.appendChild(i);i.select();try{document.execCommand('copy');toast('Скопировано','ok')}catch(e){toast(t)}i.remove()});hap()}
+const fmtD=t=>new Date(t).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const ST={pending:['На проверке','wait'],confirmed:['Подтверждено','ok'],rejected:['Отклонено','er'],paid:['Выплачено','ok'],created:['Ожидает оплаты','wait']};
+const tag=s=>`<span class="tag ${ST[s][1]}">${ST[s][0]}</span>`;
+
+/* ============ НАВИГАЦИЯ ============ */
+const ICO={home:'<circle cx="12" cy="12" r="3"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18"/>',servers:'<rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="16" height="6" rx="2"/><path d="M8 7h.01M8 17h.01"/>',tasks:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',market:'<path d="M5 8h14l-1 12H6zM9 8a3 3 0 016 0"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'};
+const NAV=[['home','Майнинг'],['servers','Серверы'],['tasks','Задания'],['market','Магазин'],['profile','Профиль']];
+$('nav').innerHTML=NAV.map(([k,n])=>`<button data-go="${k}"><svg viewBox="0 0 24 24">${ICO[k]}</svg>${n}</button>`).join('');
+let cur='home';
+function go(k){cur=k;const id=k==='home'?'t-home':k==='up'?'t-up':'t-'+k;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===(k==='up'?'home':k)));renderTab();window.scrollTo(0,0);hap()}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go)});
+
+/* ============ ЭКРАНЫ ============ */
+function renderTab(){({up:rUp,servers:rServers,tasks:rTasks,market:rMarket,profile:rProfile}[cur]||(()=>{}))()}
+function rUp(){
+  const c=cost(S.lvl),nxt=tier(S.lvl+1),t=TIERS[nxt],toTier=3-((S.lvl-1)%3);
+  $('t-up').innerHTML=`<h2>Улучшение кулера</h2><div class="card"><div class="item"><div class="ic" style="font-size:22px">❄</div><div class="t"><b>Уровень ${S.lvl} → ${S.lvl+1}</b><span class="mu">Стиль: ${TIERS[tier(S.lvl)].n}${nxt>tier(S.lvl)?' → '+t.n:''}</span></div></div>
+  <div class="grid"><div class="stat"><small>Сейчас</small><b>${f(fanRate(S.lvl),10)}</b></div><div class="stat"><small>После</small><b style="color:var(--ok)">${f(fanRate(S.lvl+1),10)}</b></div></div>
+  <div class="mu">TON в секунду · +0.35× от базовой скорости, +1 лопасть каждые 2 уровня</div>
+  <div class="bar"><i style="width:${((3-toTier)/3)*100}%"></i></div><div class="mu" style="margin-bottom:12px">До нового облика кулера: ${toTier} ур.</div>
+  <button class="btn w" id="buyUp">Улучшить за ${c.toFixed(2)} TON</button></div>
+  <div class="mu" style="padding:0 4px">Стоимость каждого следующего улучшения растёт в 1.8 раза.</div>`;
+  $('buyUp').onclick=()=>{const c=cost(S.lvl);if(S.bal<c)return toast(`Не хватает ${f(c-S.bal,4)} TON для улучшения`,'er');S.bal-=c;S.lvl++;log('Улучшение кулера до ур. '+S.lvl,-c);save();paintFan();rUp();toast('Кулер улучшен до уровня '+S.lvl,'ok');hap('heavy');fan.classList.add('boost');setTimeout(()=>fan.classList.remove('boost'),1500)}
+}
+function rServers(){
+  const a=srvActive();
+  $('t-servers').innerHTML=`<h2>Мои серверы</h2>`+(a.length?'<div class="list">'+a.map(s=>{const d=SHOP.find(x=>x.id===s.id),left=Math.ceil((s.exp-now())/864e5);return `<div class="card"><div class="item"><div class="ic">${d.ic}</div><div class="t"><b>${d.n}</b><span class="mu">${d.gh} · ${f(d.rate*86400,2)} TON/день</span></div><span class="tag ok">${left} дн.</span></div><div class="bar"><i style="width:${left/d.days*100}%"></i></div><button class="btn g w sm" data-ext="${d.id}">Продлить · ${d.cost} TON</button></div>`}).join('')+'</div>':`<div class="card" style="text-align:center"><div style="font-size:38px">🖥</div><b>Серверов пока нет</b><p class="mu">Арендуйте сервер в магазине — он добавит скорость к фарму кулера.</p><button class="btn" data-go="market">Открыть магазин</button></div>`);
+  document.querySelectorAll('[data-ext]').forEach(b=>b.onclick=()=>buySrv(b.dataset.ext))
+}
+function rMarket(){
+  $('t-market').innerHTML=`<h2>Магазин серверов</h2><div class="list">`+SHOP.map(d=>`<div class="card"><div class="item"><div class="ic">${d.ic}</div><div class="t"><b>${d.n}</b><span class="mu">${d.d} · ${d.gh}</span></div><span class="rew">${d.cost} TON</span></div><div class="mu" style="margin:10px 0">+${f(d.rate,6)} TON/сек · ${f(d.rate*86400,2)} TON/день · ${d.days} дней</div><button class="btn w" data-buy="${d.id}">Арендовать</button></div>`).join('')+'</div>';
+  document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buySrv(b.dataset.buy))
+}
+function buySrv(id){const d=SHOP.find(x=>x.id===id);if(S.bal<d.cost)return toast(`Не хватает ${f(d.cost-S.bal,2)} TON`,'er');S.bal-=d.cost;const ex=S.srv.find(s=>s.id===id);if(ex&&ex.exp>now())ex.exp+=d.days*864e5;else{S.srv=S.srv.filter(s=>s.id!==id);S.srv.push({id,exp:now()+d.days*864e5})}log('Сервер «'+d.n+'»',-d.cost);save();toast('Сервер «'+d.n+'» активен','ok');hap('heavy');renderTab()}
+
+/* --- задания --- */
+const today=()=>new Date().toISOString().slice(0,10);
+const TASKS=[
+ {id:'upg',ic:'⚡',n:'Улучшить кулер',d:'Подними кулер до 2 уровня',r:0.15,st:()=>S.lvl>=2?'ready':'todo',act:()=>go('up'),lbl:'К улучшению'},
+ {id:'dep',ic:'💎',n:'Пополнить баланс',d:'Первое пополнение, подтверждённое сетью TON',r:0.1,st:()=>S.dep.some(d=>d.s==='confirmed')?'ready':S.dep.some(d=>d.s==='pending')?'wait':'todo',act:()=>depSheet(),lbl:'Пополнить'},
+ {id:'inv',ic:'👥',n:'Пригласить друга',d:'Награда 0.5 TON за нового друга + 10% от его пополнений и покупок',r:0.5,st:()=>S.seen.inv==='approved'?'done':S.seen.inv==='sent'?'wait':'todo',act:()=>{const u=referralLink();try{tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(u)+'&text='+encodeURIComponent('Майнь TON в TonMine!'))}catch(e){copy(u)}S.seen.inv='sent';save();setTimeout(rTasks,300)},lbl:'Пригласить'},
+ {id:'daily',ic:'🎁',n:'Ежедневный вход',d:'Заходи каждый день и забирай бонус',r:0.05,st:()=>S.daily===today()?'done':'ready'},
+ {id:'soc',ic:'📣',n:'Подписаться на канал',d:'Подпишись на @TonMinesNews и нажми «Проверить подписку»',r:5,st:()=>S.tasks.soc?'done':'todo',act:()=>{S.seen.soc=1;save();try{tg.openTelegramLink(CFG.CHANNEL)}catch(e){window.open(CFG.CHANNEL,'_blank')}setTimeout(rTasks,500)},lbl:'Открыть канал'}];
+function rTasks(){
+  if(cur!=='tasks')return;
+  const tk=S.tik;
+  let h='<h2>Задания</h2><div class="list">'+TASKS.map(t=>{const s=S.tasks[t.id]&&t.id!=='daily'?'done':t.st();
+    const b=s==='done'?'<span class="tag ok">Выполнено</span>':t.id==='soc'&&S.seen.soc?'<button class="btn sm" data-verify-channel>Проверить подписку</button>':s==='ready'?`<button class="btn sm" data-claim="${t.id}">Забрать</button>`:s==='wait'?'<span class="tag wait">Проверка…</span>':`<button class="btn g sm" data-do="${t.id}">${t.lbl}</button>`;
+    return `<div class="card"><div class="item"><div class="ic">${t.ic}</div><div class="t"><b>${t.n}</b><span class="mu">${t.d}</span></div></div><div class="item" style="margin-top:12px;justify-content:space-between"><span class="rew">+${t.r} TON</span>${b}</div></div>`}).join('');
+  h+=`<div class="card" style="border-color:#8b4dff66"><div class="item"><div class="ic">▶</div><div class="t"><b>Видео о TonMine в TikTok</b><span class="mu">Опубликуй видео и набери минимум 1000 просмотров</span></div><span class="rew">+10 TON</span></div>`;
+  if(!tk||tk.s==='rejected')h+=`${tk?'<p class="mu" style="color:var(--er)">Заявка отклонена. Отправь другую ссылку.</p>':''}<input class="field" id="tkUrl" placeholder="https://www.tiktok.com/@user/video/…"><button class="btn w" id="tkSend">Отправить на проверку</button>`;
+  else h+=`<p class="mu" style="word-break:break-all">${esc(tk.url)}</p><div class="item" style="justify-content:space-between">${tag(tk.s)}<span class="mu">${tk.s==='pending'?'Ждём решения администратора':'Награда зачислена'}</span></div>`;
+  $('t-tasks').innerHTML=h+'</div>';
+  document.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>TASKS.find(t=>t.id===b.dataset.do).act());
+  document.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>claim(b.dataset.claim));
+  const verifyChannel=$('t-tasks').querySelector('[data-verify-channel]');
+  if(verifyChannel)verifyChannel.onclick=async()=>{
+    if(!CFG.API_BASE)return toast('Проверка подписки заработает после подключения backend','er');
+    verifyChannel.disabled=true;verifyChannel.textContent='Проверяем…';
+    const result=await api('/task/verify-channel',{id:'soc'});
+    if(result?.status==='approved'||result?.ok===true){
+      S.tasks.soc=1;S.bal+=5;S.done++;log('Задание: подписка на @TonMinesNews',5);save();
+      toast('+5 TON за подписку','ok');rTasks();$('bal').textContent=f(S.bal,9);
+    }else{verifyChannel.disabled=false;verifyChannel.textContent='Проверить подписку';toast(result?.message||'Подписка не найдена. Подпишись и попробуй ещё раз','er')}
+  };
+  const s=$('tkSend');if(s)s.onclick=async()=>{const u=$('tkUrl').value.trim();if(!/^https?:\/\/((www|vm|vt|m)\.)?tiktok\.com\/\S+/i.test(u))return toast('Вставь ссылку на видео TikTok','er');S.tik={url:u,s:'pending',t:now()};save();api('/task/submit',{id:'tik',url:u});toast('Видео отправлено на проверку','ok');rTasks()};
+}
+function claim(id){const t=TASKS.find(x=>x.id===id);if(id==='soc')return toast('Подписка проверяется сервером','er');if(S.tasks[id]&&id!=='daily')return;if(id==='daily')S.daily=today();else S.tasks[id]=1;S.bal+=t.r;S.done++;log('Задание: '+t.n,t.r);save();toast(`+${t.r} TON за задание`,'ok');hap('heavy');rTasks()}
+
+/* ============ РЕФЕРАЛЬНАЯ СИСТЕМА ============ */
+const REF_BONUS=0.5,REF_PERCENT=0.10;
+function referralLink(){
+  if(!tgU?.id)return '';
+  return `https://t.me/${CFG.BOT}?startapp=ref_${tgU.id}`;
+}
+async function referralSheet(){
+  const link=referralLink();
+  const stats=await api('/referral/stats');
+  const count=Number(stats?.count||0),earned=Number(stats?.earned||0);
+  sheet(`<h3>Реферальная программа</h3>
+    <div class="grid"><div class="stat"><small>Приглашено друзей</small><b>${count}</b></div><div class="stat"><small>Заработано</small><b>${f(earned,4)} TON</b></div></div>
+    <div class="card"><b>Награды</b><p class="mu" style="margin:8px 0 0">За каждого нового приглашённого — ${REF_BONUS} TON. Дополнительно получаешь ${REF_PERCENT*100}% от его подтверждённых пополнений и покупок.</p></div>
+    <div class="mu">Твоя ссылка</div><div class="copy"><span style="word-break:break-all">${esc(link||'Открой приложение через Telegram')}</span><button class="btn sm" id="refCopy" ${link?'':'disabled'}>Копировать</button></div>
+    <button class="btn w" id="refShare" ${link?'':'disabled'} style="margin-top:10px">Пригласить друга</button>
+    <button class="btn g w" id="refRefresh" style="margin-top:8px">Обновить статистику</button>
+    <p class="mu" style="margin-top:10px">Бонусы начисляются один раз за уникального пользователя. Проценты начисляются сервером после подтверждения операции. Не учитываются собственные/повторные аккаунты.</p>
+    ${!CFG.API_BASE?'<p class="mu">Демо: для реального учёта и начисления TON подключи backend.</p>':''}`);
+  const cp=$('refCopy');if(cp)cp.onclick=()=>copy(link);
+  const sh=$('refShare');if(sh)sh.onclick=()=>{const url='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Присоединяйся к TonMine!');try{tg.openTelegramLink(url)}catch(e){copy(link)}};
+  $('refRefresh').onclick=referralSheet;
+}
+async function referralRegister(){
+  const start=String(tg?.initDataUnsafe?.start_param||'');
+  if(/^ref_[0-9]{1,15}$/.test(start)&&tgU?.id&&start!==`ref_${tgU.id}`){
+    await api('/referral/register',{startParam:start});
+  }
+}
+
+/* --- профиль --- */
+function rProfile(){
+  const n=tgU?[tgU.first_name,tgU.last_name].filter(Boolean).join(' '):'Гость',un=tgU?.username?'@'+tgU.username:'';
+  const av=tgU?.photo_url?`style="background-image:url('${esc(tgU.photo_url)}')"`:'';
+  $('t-profile').innerHTML=`<div class="card"><div class="item"><div class="av" ${av}>${av?'':esc(n[0]||'T')}</div><div class="t"><b style="font-size:17px">${esc(n)}</b><span class="mu">${esc(un)}</span></div></div>
+  <div class="mu" style="margin-top:14px">Telegram ID</div><div class="copy"><span>${tgU?.id??'Запусти через Telegram'}</span><button class="btn sm" id="cpTgId" ${tgU?.id?'':'disabled'}>Копировать</button></div>
+  <div class="mu" style="margin-top:14px">ID в приложении (не Telegram ID)</div><div class="copy"><span>${S.id}</span><button class="btn sm" id="cpId">Копировать</button></div>
+  <div class="grid" style="margin-bottom:0"><div class="stat"><small>Баланс</small><b>${f(S.bal,4)} TON</b></div><div class="stat"><small>Кулер</small><b>Ур. ${S.lvl}</b></div><div class="stat"><small>Заданий выполнено</small><b>${S.done}</b></div><div class="stat"><small>Серверов</small><b>${srvActive().length}</b></div></div></div>
+  <h2>История наград</h2><div class="card list">${S.hist.filter(x=>x.amt>0).slice(0,15).map(x=>`<div class="item" style="justify-content:space-between;margin:0"><div><b style="font-size:13px">${esc(x.title)}</b><div class="mu">${fmtD(x.t)}</div></div><span class="rew">+${x.amt}</span></div>`).join('')||'<p class="mu" style="margin:0">Наград пока нет — выполняй задания в разделе «Задания».</p>'}</div>
+  <button class="btn w" id="refOpen" style="margin-top:14px">Реферальная программа · +0.5 TON и 10%</button>
+  ${isAdmin()?'<button class="btn w" id="adminOpen" style="margin-top:14px">Админ-панель · заявки</button>':''}`;
+  $('cpTgId').onclick=()=>tgU?.id&&copy(String(tgU.id));$('cpId').onclick=()=>copy(S.id);
+  const ro=$('refOpen');if(ro)ro.onclick=referralSheet;
+  const ao=$('adminOpen');if(ao)ao.onclick=adminSheet
+}
+
+/* ============ АДМИН-ПАНЕЛЬ ============ */
+const ADMIN_IDS=[9207642257,7341351177];
+function isAdmin(){return ADMIN_IDS.includes(Number(tgU?.id))}
+async function adminSheet(){
+ if(!isAdmin())return toast('Нет доступа','er');
+ const remote=CFG.API_BASE?await api('/admin/requests'):null;
+ const deps=remote?.deposits||S.dep.map(d=>({...d,type:'deposit'}));
+ const wds=remote?.withdrawals||S.wd.map(w=>({...w,type:'withdrawal'}));
+ const item=(x,type)=>{const dep=type==='deposit',a=Number(x.amount??x.a??0),fee=Number(x.fee??(dep?0:Math.ceil(a*CFG.WD_FEE))),pay=Number(x.payout??(dep?a:a-fee));
+  return `<div class="card" style="margin:0 0 10px"><div class="item" style="justify-content:space-between"><b>${dep?'Пополнение':'Вывод'} · ${f(a,2)} TON</b>${tag(x.status||x.s||'pending')}</div><div class="mu">ID: ${esc(x.id||'—')} · Telegram: ${esc(String(x.userId??x.telegramId??'—'))}</div>${!dep?`<div class="mu" style="margin-top:6px">Комиссия 30% (округление вверх): ${f(fee,2)} TON · к выплате: ${f(pay,2)} TON</div><div class="mu" style="word-break:break-all">Адрес: ${esc(x.address||x.addr||'—')}</div>`:''}<div class="row" style="margin-top:10px"><button class="btn g" data-reject="${esc(x.id||'')}" data-type="${type}">Отклонить</button><button class="btn" data-approve="${esc(x.id||'')}" data-type="${type}">Одобрить</button></div></div>`};
+ sheet(`<h3>Админ-панель</h3><p class="mu">Локальная админ-панель. Начисления по ID сохраняются только в localStorage этого браузера.</p><div class="card"><h3>Выдать TON пользователю</h3><input class="field" id="creditUser" inputmode="numeric" placeholder="Telegram ID пользователя"><input class="field" id="creditAmount" type="number" inputmode="decimal" min="0.000000001" step="any" placeholder="Количество TON"><button class="btn w" id="creditSend">Выдать TON</button><p class="mu">Локальный режим: начисление работает только в этом браузере и не синхронизируется между устройствами.</p></div><h3>Пополнения</h3>${deps.filter(x=>(x.status||x.s||'pending')==='pending').map(x=>item(x,'deposit')).join('')||'<p class="mu">Нет ожидающих пополнений.</p>'}<h3>Выводы</h3>${wds.filter(x=>(x.status||x.s||'pending')==='pending').map(x=>item(x,'withdrawal')).join('')||'<p class="mu">Нет ожидающих выводов.</p>'}<button class="btn g w" id="adminRefresh">Обновить заявки</button><p class="mu">${CFG.API_BASE?'Подключён сервер заявок.':'Демо-режим: видны только заявки в этом браузере. Чтобы видеть заявки всех пользователей, подключи backend к API.'}</p>`);
+ $('adminRefresh').onclick=adminSheet;
+ $('creditSend').onclick=async()=>{
+   if(!isAdmin())return toast('Нет доступа','er');
+   const userId=$('creditUser').value.trim(),amount=Number($('creditAmount').value);
+   if(!/^\d{5,20}$/.test(userId))return toast('Введи корректный Telegram ID','er');
+   if(!(Number.isFinite(amount)&&amount>0&&amount<=1000000000))return toast('Введи положительное количество TON','er');
+   try{
+     const credits=JSON.parse(localStorage.getItem(LOCAL_CREDITS_KEY)||'{}');
+     credits[userId]=credits[userId]||[];
+     credits[userId].push({id:rid(10),amount,used:false,by:String(tgU?.id||'')});
+     localStorage.setItem(LOCAL_CREDITS_KEY,JSON.stringify(credits));
+   }catch(e){return toast('Не удалось сохранить локальное начисление','er')}
+   toast(`Записано ${amount} TON для ID ${userId} в этом браузере`,'ok');adminSheet();
+ };
+ document.querySelectorAll('[data-approve],[data-reject]').forEach(b=>b.onclick=async()=>{const status=b.hasAttribute('data-approve')?'approved':'rejected',type=b.dataset.type,id=b.dataset.approve||b.dataset.reject;
+  if(!CFG.API_BASE){const arr=type==='deposit'?S.dep:S.wd,req=arr.find(x=>x.id===id);if(!req)return toast('Заявка не найдена в этом браузере','er');req.s=status;if(type==='deposit'&&status==='approved'&&!req.credited){S.bal+=req.a;req.credited=true;log('Пополнение одобрено',req.a)}if(type==='withdrawal'&&status==='rejected'&&!req.refunded){S.bal+=req.a;req.refunded=true;log('Возврат отклонённого вывода',req.a)}save();toast(status==='approved'?'Заявка одобрена':'Заявка отклонена','ok');return adminSheet()}
+  const r=await api('/admin/decision',{type,id,status});if(!r||r.ok===false)return toast('Не удалось сохранить решение на сервере','er');toast(status==='approved'?'Заявка одобрена':'Заявка отклонена','ok');await sync();adminSheet();
+ });
+}
+
+/* ============ ПОПОЛНЕНИЕ ============ */
+function depSheet(){
+  sheet(`<h3>Пополнение TON</h3><p class="mu">Укажите сумму — мы покажем адрес и уникальное Memo.</p><input class="field" id="dAmt" type="number" inputmode="decimal" min="0.1" step="0.1" placeholder="Сумма, TON"><button class="btn w" id="dNext">Продолжить</button>
+  ${S.dep.length?'<button class="btn g w" id="dStat" style="margin-top:8px">Статус платежей</button>':''}`);
+  $('dNext').onclick=()=>{const a=parseFloat($('dAmt').value);if(!(a>=0.1))return toast('Минимальная сумма — 0.1 TON','er');depInfo(a)};
+  const s=$('dStat');if(s)s.onclick=depStatus
+}
+function depInfo(a){
+  const memo=S.id;
+  sheet(`<h3>Отправьте ровно ${f(a,2)} TON</h3><div class="mu">Адрес кошелька</div><div class="copy"><span>${CFG.WALLET}</span><button class="btn sm" id="cA">Копировать</button></div><div class="mu">Memo (обязательно)</div><div class="copy"><span>${memo}</span><button class="btn sm" id="cM">Копировать</button></div>
+  <div class="card" style="background:#0b0b10"><b>Инструкция</b><ol class="mu" style="padding-left:18px;margin:8px 0 0"><li>Откройте свой TON-кошелёк.</li><li>Вставьте адрес и сумму ${f(a,2)} TON.</li><li>В поле «Комментарий» вставьте Memo — без него платёж не найдётся.</li><li>Отправьте и нажмите «Я оплатил».</li></ol></div>
+  <button class="btn w" id="dPaid">Я оплатил</button><p class="mu">Баланс пополнится только после подтверждения транзакции в блокчейне сервером.</p>`);
+  $('cA').onclick=()=>copy(CFG.WALLET);$('cM').onclick=()=>copy(memo);
+  $('dPaid').onclick=()=>{const d={id:'D'+rid(6),a,s:'pending',t:now()};S.dep.unshift(d);save();api('/deposit/create',{id:d.id,amount:a,memo});depStatus();rTasks()}
+}
+function depStatus(){
+  sheet(`<h3>Статус платежей</h3><div class="list">`+(S.dep.map(d=>`<div class="card" style="margin:0"><div class="item" style="justify-content:space-between"><div><b>${f(d.a,2)} TON</b><div class="mu">${d.id} · ${fmtD(d.t)}</div></div>${tag(d.s)}</div>${d.s==='pending'?'<p class="mu" style="margin:8px 0 0">Ищем транзакцию с вашим Memo в сети TON. Обычно это занимает 1–5 минут.</p>':''}</div>`).join('')||'<p class="mu">Платежей нет.</p>')+`</div><button class="btn g w" id="dRef" style="margin-top:12px">Обновить статус</button>`);
+  $('dRef').onclick=async()=>{await sync();depStatus();toast(CFG.API_BASE?'Статус обновлён':'Сервер не подключён — подтверждения недоступны')}
+}
+
+/* ============ ВЫВОД ============ */
+function wdSheet(){
+  sheet(`<h3>Вывод TON</h3><p class="mu">Доступно: ${f(S.bal,4)} TON · минимум ${CFG.MIN_WD} TON</p><input class="field" id="wAddr" placeholder="TON-адрес (UQ… / EQ…)"><input class="field" id="wAmt" type="number" inputmode="decimal" placeholder="Сумма, TON"><button class="btn w" id="wNext">Продолжить</button><div class="mu" style="margin:14px 0 6px">История заявок</div>`+(S.wd.map(w=>`<div class="item" style="justify-content:space-between;margin-bottom:8px"><div><b>${f(w.a,2)} TON</b><div class="mu">${esc(w.addr.slice(0,8))}…${esc(w.addr.slice(-6))} · ${fmtD(w.t)}</div></div>${tag(w.s)}</div>`).join('')||'<p class="mu">Заявок пока нет.</p>'));
+  $('wNext').onclick=()=>{const ad=$('wAddr').value.trim(),a=parseFloat($('wAmt').value);
+    if(!/^(EQ|UQ)[A-Za-z0-9_-]{46}$/.test(ad))return toast('Проверь TON-адрес: 48 символов, начало UQ или EQ','er');
+    if(!(a>=CFG.MIN_WD))return toast(`Минимальный вывод — ${CFG.MIN_WD} TON`,'er');
+    if(a>S.bal)return toast('Недостаточно средств на балансе','er');
+    const fee=Math.ceil(a*CFG.WD_FEE),payout=a-fee;
+    sheet(`<h3>Подтвердите вывод</h3><div class="card"><div class="mu">Сумма вывода</div><b style="font-size:22px">${f(a,2)} TON</b><div class="mu" style="margin-top:8px">Комиссия 30% (округление вверх до целого TON)</div><b>${f(fee,2)} TON</b><div class="mu" style="margin-top:8px">Вы получите</div><b style="font-size:22px">${f(payout,2)} TON</b><div class="mu" style="margin-top:10px">Адрес</div><div style="word-break:break-all;font-size:12px;font-family:ui-monospace,monospace">${esc(ad)}</div></div><p class="mu">С баланса резервируется ${f(a,2)} TON. Заявка уйдёт администратору на проверку.</p><div class="row"><button class="btn g" id="wBack">Назад</button><button class="btn" id="wOk">Подтвердить</button></div>`);
+    $('wBack').onclick=wdSheet;
+    $('wOk').onclick=()=>{if(a>S.bal)return;S.bal-=a;S.wd.unshift({id:'W'+rid(6),a,fee,payout,addr:ad,s:'pending',t:now()});log('Заявка на вывод',-a);save();api('/withdraw',{id:S.wd[0].id,address:ad,amount:a,fee,payout});wdSheet();toast('Заявка на вывод создана','ok')}}
+}
+function histSheet(){
+  sheet('<h3>История операций</h3><div class="list">'+(S.hist.map(x=>`<div class="item" style="justify-content:space-between;margin:0"><div><b style="font-size:13px">${esc(x.title)}</b><div class="mu">${fmtD(x.t)}</div></div><b style="color:${x.amt>0?'var(--ok)':'var(--tx)'}">${x.amt>0?'+':''}${f(x.amt,x.amt%1?4:1)}</b></div>`).join('')||'<p class="mu">Операций пока нет.</p>')+'</div>')
+}
+
+/* ============ СИНХРОНИЗАЦИЯ С СЕРВЕРОМ ============ */
+async function sync(){
+  const r=await api('/sync');if(!r)return;
+  (r.credits||[]).forEach(c=>{if(S.seen['c'+c.id])return;S.seen['c'+c.id]=1;S.bal+=c.amount;log(c.title||'Зачисление',c.amount)});
+  Object.entries(r.deposits||{}).forEach(([id,s])=>{const d=S.dep.find(x=>x.id===id);if(d)d.s=s});
+  Object.entries(r.withdrawals||{}).forEach(([id,s])=>{const w=S.wd.find(x=>x.id===id);if(w){if(s==='rejected'&&w.s==='pending'){S.bal+=w.a;log('Возврат вывода',w.a)}w.s=s}});
+  if(r.tasks?.tik&&S.tik){const a=r.tasks.tik;if(a==='approved'&&S.tik.s!=='confirmed'){S.tik.s='confirmed';S.bal+=10;S.done++;log('Задание: TikTok',10)}else if(a==='rejected')S.tik.s='rejected'}
+  if(r.tasks?.channel==='approved'&&!S.tasks.soc){S.tasks.soc=1;S.bal+=5;S.done++;log('Задание: подписка на @TonMinesNews',5)}
+  if(r.tasks?.inv==='approved')S.seen.inv='approved';
+  save();renderTab()
+}
+
+/* ============ ЦИКЛ ФАРМА ============ */
+const ONCLICK={bDep:depSheet,bWd:wdSheet,bHist:histSheet,goUp:()=>go('up')};
+Object.entries(ONCLICK).forEach(([k,fn])=>$(k).onclick=fn);
+function tick(){
+  const t=now();let dt=(t-S.t)/1000;if(dt<0)dt=0;dt=Math.min(dt,CFG.OFFLINE_CAP);
+  S.bal+=rate()*dt;S.t=t;
+  $('bal').textContent=f(S.bal,9);
+  const r=rate();$('sRate').textContent=f(r,10)+' /с';$('sLvl').textContent=S.lvl;$('sHour').textContent=f(r*3600,4)+' TON';$('sDay').textContent=f(r*86400,3)+' TON'
+}
+paintFan();tick();go('home');referralRegister();
+setInterval(tick,100);setInterval(save,5000);setInterval(sync,30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{tick();sync()}});
+addEventListener('pagehide',save);
+applyLocalCredits();sync();save();
+})();
+</script>
+</body>
+</html>
